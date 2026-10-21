@@ -1,0 +1,8 @@
+# Ignore the llama.cpp folder
+# *.cpp
+
+# Ignore the llama folder
+llama/
+
+# Ignore the models folder in the current directory
+models/
