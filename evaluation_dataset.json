@@ -1,0 +1,66 @@
+{
+  "dataset_name": "embedded_state_understanding_eval",
+  "description": "Evaluation dataset designed to test state consistency, timing invariants, and system-level logical understanding in language models.",
+  "evaluations": [
+    {
+      "id": "eval_01_non_blocking_state_machine",
+      "title": "Non-Blocking State Machine with millis() Persistence",
+      "category": "Temporal Logic & Local Scope Persistence",
+      "prompt": "Write a C++ function updateValveState() called repeatedly in the main loop. It must manage a pneumatic solenoid valve through 3 states: IDLE, EXTENDING (takes 500ms), and RETRACTING (takes 300ms). Use an internal static state variable and millis() for timing. Do NOT use blocking delays. Return true only when a full cycle (Idle -> Extending -> Retracting -> Idle) is complete.",
+      "expected_invariants": [
+        "State variable and timing anchors must use static local or global persistence across function calls.",
+        "Must NOT use delay() or any blocking sleep function.",
+        "Cycle completion must be signaled accurately on transition back to IDLE."
+      ],
+      "predicted_failure_mode": "Model re-initializes timer variables on each execution, uses standard local variables instead of static/global scope, or falls back to blocking delays."
+    },
+    {
+      "id": "eval_02_circular_buffer_boundary",
+      "title": "Circular Buffer Full/Empty Boundary Ambiguity",
+      "category": "Mathematical & State Boundary Invariants",
+      "prompt": "Implement a fixed-size circular buffer class in C++ for uint8_t data with a capacity of 16 bytes. Implement push(uint8_t val) and bool pop(uint8_t *val). You must correctly distinguish between a completely full buffer and a completely empty buffer when head and tail pointers point to the same index, without using an extra boolean flag.",
+      "expected_invariants": [
+        "Must handle buffer full vs. empty boundary logic without an explicit count or boolean flag (e.g., using modulo with capacity - 1 or pointer offset math).",
+        "Must correctly wrap head and tail indices modulo 16.",
+        "Push must fail or prevent overwrite when full; pop must return false when empty."
+      ],
+      "predicted_failure_mode": "Model fails to resolve head == tail ambiguity, leading to unread data overwrites or incorrect empty/full reporting."
+    },
+    {
+      "id": "eval_03_register_bit_masking",
+      "title": "Register Bit-Masking Without Side Effects",
+      "category": "Low-Level Hardware & Bitwise Invariants",
+      "prompt": "Write a C function: void configure_motor_channel(uint8_t *control_reg, uint8_t mode, uint8_t enable). Bits [3:2] of control_reg represent the mode (values 0-3). Bit [0] represents the channel enable (0 or 1). Modify ONLY these bits in the register pointed to by control_reg. Leave bits [7:4] and bit [1] completely untouched.",
+      "expected_invariants": [
+        "Must apply a clear mask before applying bitwise OR with target values.",
+        "Bit shifting must place mode precisely at bits [3:2] and enable at bit [0].",
+        "Must preserve adjacent bits ([7:4] and [1]) via atomic/compound bitwise AND/OR operations."
+      ],
+      "predicted_failure_mode": "Model forgets to clear existing bit fields prior to setting new values, uses incorrect bit shifts, or overwrites neighboring control bits."
+    },
+    {
+      "id": "eval_04_isr_task_concurrency",
+      "title": "Asynchronous ISR-to-Task Communication Safety",
+      "category": "Concurrency & Hardware ISR Invariants",
+      "prompt": "Write an ESP32 FreeRTOS C++ snippet where a UART high-speed interrupt service routine (ISR) receives incoming bytes and pushes them into a shared buffer. Write the ISR and the consumer task loop. Show how you prevent race conditions and ensure thread-safety without using standard mutexes (which are illegal inside an ISR).",
+      "expected_invariants": [
+        "Must use ISR-safe synchronization primitives (e.g., FreeRTOS Queues with xQueueSendFromISR or direct task notifications).",
+        "Must NOT instantiate or lock standard mutexes (std::mutex, SemaphoreHandle_t taking non-ISR functions) inside the ISR context.",
+        "Must clear interrupt status / handle context switches (e.g., portYIELD_FROM_ISR) if required."
+      ],
+      "predicted_failure_mode": "Model attempts to lock a standard C++ std::mutex or FreeRTOS mutex inside the ISR context, causing kernel panics on embedded hardware."
+    },
+    {
+      "id": "eval_05_hardware_polling_timeout",
+      "title": "Dependent Hardware Initialization with Timeout Polling",
+      "category": "Feedback Loop & Bounded Exit Invariants",
+      "prompt": "Write a C++ initialization function for a sensor driver. It must send a soft-reset command over I2C, then poll the status register in a loop until the 'ready' bit goes high. Implement a strict 50ms timeout using millis(). If the timeout expires before the ready bit goes high, return false and abort initialization.",
+      "expected_invariants": [
+        "Must establish a non-blocking or bounded non-delay polling loop checking millis() delta against 50ms.",
+        "Must exit and return false immediately if elapsed time exceeds 50ms.",
+        "Must check bitmask status of the I2C response on each iteration."
+      ],
+      "predicted_failure_mode": "Model inserts a static delay(50) instead of an active polling loop with timeout evaluation, assuming instant hardware state transitions."
+    }
+  ]
+}
