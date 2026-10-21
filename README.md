@@ -1,22 +1,23 @@
 # Empirical Evaluation of State Understanding & Structural Reasoning in Compact LLMs
 
-**Author / Candidate**: Fatima Fellowship Applicant  
+**Author / Candidate**: Eric  Babatunde, Fatima Fellowship Applicant  
 **Evaluated Model**: `Phi-4-mini-Instruct` (3.8B parameters)  
 **Evaluation Engine & Analyst**: Google Gemini  
 **Primary Execution Environment**: `llama.cpp` (`llama-server` on localhost:8080) with local host-side testing (`g++`, VS Code IntelliSense)  
 **Hugging Face Repository**: Embedded State Understanding Evaluation Suite  
+**GitHub link**: https://github.com/EricBabatunde/phi4miniEval
 
 ---
 
 ## Question 1: Identifying the Blind Spot
 
 ### The Critical Gap: The Illusion of Competence vs. Structural State Understanding
-Standard AI benchmarking datasets (e.g., HumanEval, MBPP, GSM8K) measure a model's ability to complete isolated code snippets or follow conversational patterns. They reward surface-level syntactic fluency—how closely generated text matches token patterns in the training set. However, these benchmarks fail to capture a critical, underexplored blind spot in small-to-medium frontier models (0.6B to 6B parameters): **the lack of an explicit structural understanding layer for state, scope, and environmental invariants.**
+Standard AI benchmarking datasets (e.g., HumanEval, MBPP, GSM8K) measure a model's ability to complete isolated code snippets or follow conversational patterns. They reward surface-level syntactic fluency—how closely generated text matches token patterns in the training set. However, these benchmarks fail to capture a critical, underexplored blind spot in small-to-medium frontier models (0.6B to 6B parameters): the lack of an explicit structural understanding layer for state, scope, and environmental invariants.
 
 When writing low-level code (such as C/C++ for embedded systems, real-time operating systems, or bare-metal hardware drivers), syntactically valid code is worthless if it violates:
-1. **Scope and Lifetime Invariants**: Variable persistence across execution loops (e.g., static vs. local stack variables).
-2. **Environmental & Toolchain Constraints**: Host desktop OS APIs vs. target embedded toolchains (e.g., mixing desktop `<thread>` with bare-metal `<Wire.h>`).
-3. **Hardware & Concurrency Rules**: Atomic register operations, interrupt service routine (ISR) safety, and bitwise isolation.
+1. Scope and Lifetime Invariants: Variable persistence across execution loops (e.g., static vs. local stack variables).
+2. Environmental & Toolchain Constraints: Host desktop OS APIs vs. target embedded toolchains (e.g., mixing desktop `<thread>` with bare-metal `<Wire.h>`).
+3. Hardware & Concurrency Rules: Atomic register operations, interrupt service routine (ISR) safety, and bitwise isolation.
 
 A general-purpose chat/reasoning model acts as a sophisticated autocomplete engine. It mimics the *style* of C++ boilerplate, but because it predicts tokens autoregressively without a underlying state machine or symbolic verifier, it repeatedly produces code that immediately fails at compilation, links to missing paths, or triggers memory and concurrency bugs.
 
@@ -44,7 +45,7 @@ Detailed file-by-file failure breakdowns are documented in [`evaluation_results.
 
 ## Question 3: Proposing a Path Forward
 
-To bridge the gap between superficial pattern matching and structural competence, fine-tuning alone on larger corpora yields diminishing returns. What models actually require is a **neuro-symbolic cognitive architecture** that enforces determinism and state consistency. 
+To bridge the gap between superficial pattern matching and structural competence, fine-tuning alone on larger corpora yields diminishing returns. What models actually require is a neuro-symbolic cognitive architecture that enforces determinism and state consistency. 
 
 Drawing inspiration from four-subsystem cognitive architectures, I propose a lightweight, practical paradigm to give compact models a true **Understanding Layer**:
 
